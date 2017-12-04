@@ -1,0 +1,15 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.springframework.boot:spring-boot-starter-web:1.5.9.RELEASE'
+    compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
+    compile project (':apm-client')
+
+    testCompile 'junit:junit:4.12'
+}

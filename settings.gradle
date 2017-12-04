@@ -1,0 +1,6 @@
+include 'apm-client'
+include 'apm-spring-webmvc'
+include 'apm-spring-boot'
+include 'spring-boot-sample'
+
+rootProject.name = "elatic-apm-java-agent-poc"
