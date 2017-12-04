@@ -4,6 +4,7 @@ import com.davidecavestro.elastic.apm.client.model.errors.ApmError;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
@@ -39,7 +40,7 @@ public abstract class AbstractDataPump<T> extends TimerTask {
    * @param apmAgentContext the APM agent context
    * @param data the data to publish
    */
-  protected abstract void sendData (final ApmAgentContext apmAgentContext, final List<T> data);
+  protected abstract void sendData (final ApmAgentContext apmAgentContext, final List<T> data) throws IOException;
 
   /**
    * Pumps data from the queue, within the agent context.
@@ -47,7 +48,7 @@ public abstract class AbstractDataPump<T> extends TimerTask {
    * @param apmAgentContext the agent context
    * @param queue           the data queue
    */
-  protected void pumpData (ApmAgentContext apmAgentContext, BlockingQueue<T> queue) {
+  protected void pumpData (ApmAgentContext apmAgentContext, BlockingQueue<T> queue) throws IOException {
     final List<T> data = new ArrayList<> ();
     queue.drainTo (data, apmAgentContext.getPumpBatchSize ());
 

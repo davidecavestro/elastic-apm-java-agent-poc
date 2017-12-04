@@ -10,9 +10,11 @@ spring webmvc/spring boot web applications.
 == How does it work
 
 It collects requests/errors, storing in two separate memory queues.
-Then every queue is monitored by a timer task, polling for new elements to send
+Then every queue is monitored by a timer task, polling for new elements to send.
+
 The model for documents (payloads) send to the APM server is automatically
-generated from APM json schema
+generated from APM json schema.
+
 
 == How to try it
 

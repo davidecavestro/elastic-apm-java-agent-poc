@@ -5,6 +5,7 @@ import com.davidecavestro.elastic.apm.client.model.errors.ApmPayload;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -19,12 +20,12 @@ public class ErrorsDataPump extends AbstractDataPump<ApmError> {
   }
 
   @Override
-  protected void sendData (final ApmAgentContext apmAgentContext, final List<ApmError> data){
+  protected void sendData (final ApmAgentContext apmAgentContext, final List<ApmError> data) throws IOException {
     logger.info ("Sending error data");
     apmAgentContext.getApmApiService ().sendErrors (createErrorsPayload()
         .withErrors (data)
         .withApp (apmAgentContext.getApp ())
-        .withSystem (apmAgentContext.getSystem ()));
+        .withSystem (apmAgentContext.getSystem ())).execute ();
   }
 
   protected ApmPayload createErrorsPayload () {
