@@ -37,46 +37,38 @@ Simply import the APM agent configuration
 @SpringBootApplication
 @Import (ApmConfiguration.class)
 public class SpringBootSampleApplication {
-  ,,,
+  ...
 }
 ```
 then configure it as usual with properties, env vars or passing arguments at launch
 
   elastic.apm.host::
     The apm server base url
-
     Default: `http://localhost:8200`
   elastic.apm.appname::
     Your app name
-
     Default: `MYAPP`
   elastic.apm.secrettoken::
     Your app secret token
-
     Default: `MYSECRET`
   elastic.apm.initialdelay::
     Initial delay before starting to send data to APM
-
     Default: `5000`
   elastic.apm.period::
     Amount of millis between polls for new data to send
-
     Default: `1000`
   elastic.apm.queue.capacity::
     Maximum data elements to stored in memory
-
     Default: `10000`
   elastic.apm.queue.batchsize::
     Max elements drained from the memory in as single poll
-
     Default: `100`
   elastic.apm.queue.enqueuetimeout::
     Max time to wait for memory to become available
-
     Default: `5000`
 
 To specify environments variables convert props to uppercase and
-replace dots with underscores, i.e. `elastic.apm.host`->`ELASTIC_APM_HOST`
+replace dots with underscores, i.e. `elastic.apm.host` becomes `ELASTIC_APM_HOST`
 
 
 == To do
