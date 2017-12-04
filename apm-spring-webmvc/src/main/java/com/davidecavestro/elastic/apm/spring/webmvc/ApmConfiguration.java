@@ -16,12 +16,18 @@ public class ApmConfiguration {
   private String appName;
   @Value ("${elastic.apm.secrettoken:MYSECRET}")
   private String secretToken;
-  @Value ("{elastic.apm.initialdelay:5000}")
+  @Value ("${elastic.apm.initialdelay:5000}")
   private long initialDelay;
   @Value ("${elastic.apm.period:1000}")
   private long period;
-  @Value ("${elastic.apm.queuecapacity:10000}")
+  @Value ("${elastic.apm.queue.capacity:10000}")
   private int queueCapacity;
+  @Value ("${elastic.apm.queue.batchsize:100}")
+  private int publishBatchSize;
+  @Value ("${elastic.apm.queue.fair:true}")
+  private boolean fairQueue;
+  @Value ("${elastic.apm.queue.enqueuetimeout:5000}")
+  private long enqueueTimeout;
 
   @Bean
   public ApmAgent apmAgent () {
@@ -32,6 +38,9 @@ public class ApmConfiguration {
     apmAgent.setInitialDelay (initialDelay);
     apmAgent.setPeriod (period);
     apmAgent.setQueueCapacity (queueCapacity);
+    apmAgent.setPublishBatchSize (publishBatchSize);
+    apmAgent.setEnqueueTimeout (enqueueTimeout);
+    apmAgent.setFairQueue (fairQueue);
 
     return apmAgent;
   }
