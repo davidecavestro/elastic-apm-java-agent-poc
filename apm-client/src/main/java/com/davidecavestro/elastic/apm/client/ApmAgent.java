@@ -96,15 +96,16 @@ public class ApmAgent implements ApmAgentContext {
   protected <T> T createApiClient (Class<T> type) {
     final ObjectMapper mapper = new ObjectMapper ();
     final JacksonConverterFactory jacksonConverterFactory = JacksonConverterFactory.create (mapper);
-    final OkHttpClient httpClient = new OkHttpClient();
-    httpClient.networkInterceptors().add(new Interceptor () {
+    final OkHttpClient httpClient = new OkHttpClient.Builder()
+        .addNetworkInterceptor (new Interceptor () {
       @Override
       public Response intercept(Chain chain) throws IOException {
         final Request.Builder requestBuilder = chain.request().newBuilder();
+        //force content type without charset to avoid getting 'Decoding error: invalid content type: application/json; charset=UTF-8'
         requestBuilder.header("Content-Type", "application/json");
         return chain.proceed(requestBuilder.build());
       }
-    });
+    }).build ();
     final Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(getApmHost ())
         .addConverterFactory (jacksonConverterFactory)

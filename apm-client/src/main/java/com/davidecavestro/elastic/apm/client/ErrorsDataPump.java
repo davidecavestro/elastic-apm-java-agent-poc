@@ -4,6 +4,7 @@ import com.davidecavestro.elastic.apm.client.model.errors.ApmError;
 import com.davidecavestro.elastic.apm.client.model.errors.ApmPayload;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import retrofit2.Response;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,10 +23,13 @@ public class ErrorsDataPump extends AbstractDataPump<ApmError> {
   @Override
   protected void sendData (final ApmAgentContext apmAgentContext, final List<ApmError> data) throws IOException {
     logger.info ("Sending error data");
-    apmAgentContext.getApmApiService ().sendErrors (createErrorsPayload()
+    final Response<Void> response = apmAgentContext.getApmApiService ().sendErrors (createErrorsPayload ()
         .withErrors (data)
         .withApp (apmAgentContext.getApp ())
         .withSystem (apmAgentContext.getSystem ())).execute ();
+    if (!response.isSuccessful ()) {//FIXME handle errors and retry
+      logger.warn ("Failed sending date "+ response);
+    }
   }
 
   protected ApmPayload createErrorsPayload () {
