@@ -8,9 +8,9 @@ public interface RetrofitApmApiService {
 //  @GET("users/{user}/repos")
 //  Call<List<Repo>> sendTransactions(@Path("user") String user);
 
-  @POST("transactions")
+  @POST("/v1/transactions")
   Call<Void> sendTransactions(@Body com.davidecavestro.elastic.apm.client.model.transactions.ApmPayload transactions);
 
-  @POST("errors")
+  @POST("/v1/errors")
   Call<Void> sendErrors(@Body com.davidecavestro.elastic.apm.client.model.errors.ApmPayload errors);
 }

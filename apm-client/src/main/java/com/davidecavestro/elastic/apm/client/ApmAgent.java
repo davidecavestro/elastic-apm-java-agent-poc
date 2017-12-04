@@ -8,6 +8,10 @@ import com.davidecavestro.elastic.apm.client.model.errors.ApmSystem;
 import com.davidecavestro.elastic.apm.client.model.transactions.ApmTransaction;
 import com.davidecavestro.elastic.apm.client.retrofit.RetrofitApmApiService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,6 +20,7 @@ import retrofit2.converter.jackson.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -91,9 +96,19 @@ public class ApmAgent implements ApmAgentContext {
   protected <T> T createApiClient (Class<T> type) {
     final ObjectMapper mapper = new ObjectMapper ();
     final JacksonConverterFactory jacksonConverterFactory = JacksonConverterFactory.create (mapper);
+    final OkHttpClient httpClient = new OkHttpClient();
+    httpClient.networkInterceptors().add(new Interceptor () {
+      @Override
+      public Response intercept(Chain chain) throws IOException {
+        final Request.Builder requestBuilder = chain.request().newBuilder();
+        requestBuilder.header("Content-Type", "application/json");
+        return chain.proceed(requestBuilder.build());
+      }
+    });
     final Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(getApmHost ())
         .addConverterFactory (jacksonConverterFactory)
+        .client (httpClient)
         .build();
 
     return retrofit.create(type);
