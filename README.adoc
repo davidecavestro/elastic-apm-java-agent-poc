@@ -18,9 +18,10 @@ generated from APM json schema.
 
 == How to try it
 
-Try it with the sample sprig boot app, feeding apm server at http://localhost:8200
+Try it with the sample sprig boot app, i.e. sending data  to the apm server
+at http://localhost:8200 every 5 seconds
 ```
-./gradlew assemble && ./gradlew "spring-boot-sample:bootRun"
+./gradlew assemble && ./gradlew "spring-boot-sample:bootRun" -Delastic.apm.period=5000
 
 ```
 Then calling `curl http://localhost:8080/`
