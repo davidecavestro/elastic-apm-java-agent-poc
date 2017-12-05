@@ -2,6 +2,14 @@
 A POC for the Java agent of Elastic APM
 :toc:
 
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
 This is a proof of concept of Elastic APM Java agent implementation.
 It features automatic collection of errors and transactions for
 spring webmvc/spring boot web applications.
@@ -30,7 +38,7 @@ you will get a naive response: the transaction is automatically sent to the apm 
 Call `curl http://localhost:8080/?fail=true`
 to generate a fake exception and send it to the apm server
 
-Please note that the APM server and Elasticsearch should be installed separately.
+IMPORTANT: Please note that the APM server and Elasticsearch should be installed separately.
 
 == How to use it
 
@@ -70,39 +78,60 @@ then configure it as usual with properties, env vars or passing arguments at lau
     Max time to wait for memory to become available
     Default: `5000`
 
-To specify environments variables convert props to uppercase and
+[TIP]
+====
+ To specify environments variables convert props to uppercase and
 replace dots with underscores, i.e. `elastic.apm.host` becomes `ELASTIC_APM_HOST`
+====
 
 
-=== From your pring app code
+=== Custom events from spring app
 
-Inject the apm service
+Inject the apm service, then call the `traceError` or `traceTransaction` where appropriate
+
 ```
 ...
 @Autowired
 private ApmSpringService apmSpringService;
-...
+
+  // inside your logic
+
+    // let the agent populate data bits from your objects
+    ...
+    apmSpringService.traceTransaction (request, response, status, duration);
   } catch (final MyException e) {
     apmSpringService.traceError (e, request, response);
-    //or alternatively build your own error object
+  }
+  ...
+
+    // OR take full control of data sent, using fluent builders
+    // to prepare your own error/transaction objects
+    apmSpringService.traceTransaction (
+      new ApmTransaction()
+        .withId (id)
+        .withType ("request")
+        .withName (request.getURI())
+        .with...;
+    } catch (final MyException e) {
+    // or alternatively build your own error object
     apmSpringService.traceError (
       new ApmError()
           .withId("myError123")
           .withCulprit("the culprit you want")
           .with...;
   }
-...
 ```
 
 == To do
 
 Plenty of things to do :-)
 
-* Fix generation of model from schema
+* [line-through]#Fix generation of model from schema# DONE
 * Add tests (integration tests using wiremock?)
-* Add missing fields to transactions and errors generated payloads
-* Add missing config for generating transactions and errors
+* Add missing bits to transactions and errors generated payloads
+* [line-through]#Add missing config for generating transactions and errors#
 * Define a widely acceptable sets of dependencies for generic agent/specific bindings (shading?)
 * Define a widely acceptable java version compatibility
 * Choose a logging library
 * Adopt a pluggable approach for queue consumers (supporting different threading models...)
+* Introduce support for other frameworks
