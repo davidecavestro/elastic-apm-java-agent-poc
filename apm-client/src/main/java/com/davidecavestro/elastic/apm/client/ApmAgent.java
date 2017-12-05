@@ -12,6 +12,7 @@ import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -94,18 +95,15 @@ public class ApmAgent implements ApmAgentContext {
 
   //TODO decouple from Retrofit
   protected <T> T createApiClient (Class<T> type) {
+    final HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+    logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+
     final ObjectMapper mapper = new ObjectMapper ();
     final JacksonConverterFactory jacksonConverterFactory = JacksonConverterFactory.create (mapper);
     final OkHttpClient httpClient = new OkHttpClient.Builder()
-        .addNetworkInterceptor (new Interceptor () {
-      @Override
-      public Response intercept(Chain chain) throws IOException {
-        final Request.Builder requestBuilder = chain.request().newBuilder();
-        //force content type without charset to avoid getting 'Decoding error: invalid content type: application/json; charset=UTF-8'
-        requestBuilder.header("Content-Type", "application/json");
-        return chain.proceed(requestBuilder.build());
-      }
-    }).build ();
+        .addNetworkInterceptor (new FixedContentTypeInterceptor ())
+        .addInterceptor (logging).build ();
+
     final Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(getApmHost ())
         .addConverterFactory (jacksonConverterFactory)
@@ -356,5 +354,15 @@ public class ApmAgent implements ApmAgentContext {
 
   public void setEnqueueTimeout (long enqueueTimeout) {
     this.enqueueTimeout = enqueueTimeout;
+  }
+
+  private static class FixedContentTypeInterceptor implements Interceptor {
+    @Override
+    public Response intercept(Chain chain) throws IOException {
+      final Request.Builder requestBuilder = chain.request().newBuilder();
+      //force content type without charset to avoid getting 'Decoding error: invalid content type: application/json; charset=UTF-8'
+      requestBuilder.header("Content-Type", "application/json");
+      return chain.proceed(requestBuilder.build());
+    }
   }
 }
