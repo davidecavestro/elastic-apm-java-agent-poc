@@ -78,11 +78,8 @@ then configure it as usual with properties, env vars or passing arguments at lau
     Max time to wait for memory to become available
     Default: `5000`
 
-[TIP]
-====
- To specify environments variables convert props to uppercase and
-replace dots with underscores, i.e. `elastic.apm.host` becomes `ELASTIC_APM_HOST`
-====
+TIP: To specify environments variables convert props to uppercase and replace dots with underscores, i.e. `elastic.apm.host` becomes `ELASTIC_APM_HOST`
+
 
 
 === Custom events from spring app
