@@ -74,6 +74,26 @@ To specify environments variables convert props to uppercase and
 replace dots with underscores, i.e. `elastic.apm.host` becomes `ELASTIC_APM_HOST`
 
 
+=== From your pring app code
+
+Inject the apm service
+```
+...
+@Autowired
+private ApmSpringService apmSpringService;
+...
+  } catch (final MyException e) {
+    apmSpringService.traceError (e, request, response);
+    //or alternatively build your own error object
+    apmSpringService.traceError (
+      new ApmError()
+          .withId("myError123")
+          .withCulprit("the culprit you want")
+          .with...;
+  }
+...
+```
+
 == To do
 
 Plenty of things to do :-)
