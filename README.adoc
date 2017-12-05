@@ -26,19 +26,27 @@ generated from APM json schema.
 
 == How to try it
 
-Try it with the sample sprig boot app, i.e. sending data  to the apm server
-at http://localhost:8200 every 5 seconds
+Try it with the sample sprig boot app, i.e. in order feed the apm server
+at http://localhost:8200 with data every 5 seconds
 ```
 ./gradlew assemble && ./gradlew "spring-boot-sample:bootRun" -Delastic.apm.period=5000
 
 ```
-Then calling `curl http://localhost:8080/`
+
+Then calling from command line
+```
+curl http://localhost:8080/
+```
 you will get a naive response: the transaction is automatically sent to the apm server
 
-Call `curl http://localhost:8080/?fail=true`
-to generate a fake exception and send it to the apm server
+Call
+```
+curl http://localhost:8080/?fail=true
+```
+from command line to generate a fake exception and send it to the apm server.
 
 IMPORTANT: Please note that the APM server and Elasticsearch should be installed separately.
+
 
 == How to use it
 
@@ -86,7 +94,9 @@ TIP: To specify environments variables convert props to uppercase and replace do
 
 Inject the apm service, then call the `traceError` or `traceTransaction` where appropriate
 
-```
+.YourRestController.java
+[source,java]
+----
 ...
 @Autowired
 private ApmSpringService apmSpringService;
@@ -117,7 +127,7 @@ private ApmSpringService apmSpringService;
           .withCulprit("the culprit you want")
           .with...;
   }
-```
+----
 
 == To do
 
