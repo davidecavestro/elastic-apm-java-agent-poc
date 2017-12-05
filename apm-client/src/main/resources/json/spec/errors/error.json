@@ -60,7 +60,7 @@
                     "description": "The record severity.",
                     "type": ["string", "null"],
                     "default": "error",
-                    "enum": ["debug", "info", "warning", "error", "fatal", null],
+                    "enum": ["debug", "info", "warning", "error", "fatal"],
                     "maxLength": 1024
                 },
                 "logger_name": {

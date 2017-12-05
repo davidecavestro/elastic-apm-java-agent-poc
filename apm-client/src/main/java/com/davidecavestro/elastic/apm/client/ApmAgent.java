@@ -1,10 +1,7 @@
 package com.davidecavestro.elastic.apm.client;
 
 import com.davidecavestro.elastic.apm.client.model.*;
-import com.davidecavestro.elastic.apm.client.model.errors.ApmError;
-import com.davidecavestro.elastic.apm.client.model.errors.ApmException;
-import com.davidecavestro.elastic.apm.client.model.errors.ApmStacktrace;
-import com.davidecavestro.elastic.apm.client.model.errors.ApmSystem;
+import com.davidecavestro.elastic.apm.client.model.errors.*;
 import com.davidecavestro.elastic.apm.client.model.transactions.ApmTransaction;
 import com.davidecavestro.elastic.apm.client.retrofit.RetrofitApmApiService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +19,9 @@ import retrofit2.converter.jackson.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
@@ -35,6 +34,7 @@ public class ApmAgent implements ApmAgentContext {
 
   private String appName;
   private String secretToken;
+  private String appVersion = "1.0";//TODO expose setters/config
 
   private String apmHost = "http://localhost:8200";
 
@@ -46,8 +46,8 @@ public class ApmAgent implements ApmAgentContext {
   private int publishBatchSize;
   private long enqueueTimeout;
 
-  private ApmApp app;
-  private ApmSystem system;
+  private final ApmApp app;
+  private final ApmSystem system;
 
   private ArrayBlockingQueue<ApmError> errorsQueue;
   private ArrayBlockingQueue<ApmTransaction> transactionsQueue;
@@ -55,7 +55,11 @@ public class ApmAgent implements ApmAgentContext {
   private ScheduledExecutorService errorsSender;
   private ScheduledExecutorService transactionsSender;
   private RetrofitApmApiService apmApiService;
-  private String appVersion = "1.0";//TODO expose setters/config
+
+  public ApmAgent () {
+    app = new ApmApp ();
+    system = new ApmSystem ();
+  }
 
   public void refresh () {
 //    stop();//TODO store activation status
@@ -64,10 +68,7 @@ public class ApmAgent implements ApmAgentContext {
 
   public void start () {
     logger.info ("Starting ES APM agent");
-    app = new ApmApp ()
-        .withAdditionalProperty ("name", appName).withAdditionalProperty ("agent", new ApmAgent ())
-        .withAdditionalProperty ("version", appVersion);
-
+    initApmInfo();
     apmApiService = createApiClient (RetrofitApmApiService.class);
 
     errorsQueue = new ArrayBlockingQueue<> (getQueueCapacity (), fairQueue);
@@ -77,6 +78,30 @@ public class ApmAgent implements ApmAgentContext {
     errorsSender = startQueue (new ErrorsDataPump (this, errorsQueue));
     transactionsSender = startQueue (new TransactionsDataPump (this, transactionsQueue));
  }
+
+  protected void initApmInfo () {
+    app
+        .withName (appName)
+        .withAgent (new com.davidecavestro.elastic.apm.client.model.ApmAgent ()
+            .withName ("java")
+            .withVersion ("0.1.0"))//FIXME take from props
+        .withLanguage (new ApmLanguage ()
+            .withName ("java")
+            .withVersion (System.getProperty("java.version")))
+        .withVersion (appVersion)
+        .withRuntime (new ApmRuntime ().withName (System.getProperty("java.vm.name")).withVersion (System.getProperty("java.vm.version")));
+    system
+        .withArchitecture (System.getProperty("os.arch"))
+        .withPlatform (System.getProperty("os.arch"));
+
+
+    try {
+      system.withHostname (InetAddress.getLocalHost().getHostName());
+    } catch (final UnknownHostException e) {
+      //safe to catch here
+      logger.warn ("Cannot determine host name", e);
+    }
+  }
 
   protected ScheduledExecutorService startQueue (final TimerTask task) {
     final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor ();
@@ -146,21 +171,23 @@ public class ApmAgent implements ApmAgentContext {
       final Exception ex,
       final HttpServletRequest request,
       final HttpServletResponse response) {
-    final ApmError error = new ApmError ();
+
     final String id = generateUUID ();
+    //TODO check if missing data
     final Throwable rootCause = ExceptionUtils.getRootCause (ex);
     final String rootCauseMessage = ExceptionUtils.getRootCauseMessage (ex);
-    final String[] rootCauseStackTrace = ExceptionUtils.getRootCauseStackTrace (ex);
-    final String culprit = rootCauseStackTrace.length>0?
-        rootCauseStackTrace[0]:null;
 
-    final ApmContext errorContext = new ApmContext();
-    if (request!=null) {
-      final ApmHeaders_ apmHeaders = new ApmHeaders_();
+    final String[] rootCauseStackTrace = ExceptionUtils.getRootCauseStackTrace (ex);
+    final String culprit = rootCauseStackTrace.length > 0 ?
+        rootCauseStackTrace[0] : null;
+
+    final ApmContext errorContext = new ApmContext ();
+    if (request != null) {
+      final ApmHeaders_ apmHeaders = new ApmHeaders_ ();
       apmHeaders.withContent_type (response.getContentType ());
       for (
           final Enumeration<String> headerNames = request.getHeaderNames ();
-          headerNames.hasMoreElements ();) {
+          headerNames.hasMoreElements (); ) {
         final String headerName = headerNames.nextElement ();
         apmHeaders.withAdditionalProperty (headerName, request.getHeader (headerName));
       }
@@ -172,13 +199,14 @@ public class ApmAgent implements ApmAgentContext {
               .withPathname (request.getRequestURI ())
               .withSearch (request.getQueryString ())
               .withProtocol (request.getScheme ()))
-          .withHeaders (apmHeaders)
-          .withEnv (new ApmEnv ())
+              .withMethod (request.getMethod ())
+              .withHeaders (apmHeaders)
+              .withEnv (new ApmEnv ())
       );
     }
-    if (response!=null) {
+    if (response != null) {
       final ApmResponse apmResponse = new ApmResponse ();
-      final ApmHeaders apmHeaders = new ApmHeaders();
+      final ApmHeaders apmHeaders = new ApmHeaders ();
       apmHeaders.withContent_type (response.getContentType ());
       for (final String headerName : response.getHeaderNames ()) {
         apmHeaders.withAdditionalProperty (headerName, response.getHeader (headerName));
@@ -189,23 +217,25 @@ public class ApmAgent implements ApmAgentContext {
       errorContext.withResponse (apmResponse.withStatus_code ((double) response.getStatus ()));
     }
 
-    error.withId (id);
-    error.withTimestamp (LocalDateTime.now ());
-    error.withCulprit (culprit);
-
-    error.withContext (errorContext);
     final List<ApmStacktrace> stackTrace = new ArrayList<> ();
 
     for (final StackTraceElement traceElement : ex.getStackTrace ()) {
-      final ApmStacktrace trace = new ApmStacktrace ();
-      trace.withLineno (Integer.valueOf (traceElement.getLineNumber ()).doubleValue ());
-      trace.withFilename (traceElement.getFileName ());
-      trace.withFunction (traceElement.getMethodName ());
-      trace.withModule (traceElement.getClassName ());
+      final ApmStacktrace trace = new ApmStacktrace ()
+          .withLineno (Integer.valueOf (traceElement.getLineNumber ()).doubleValue ())
+          .withFilename (traceElement.getFileName ())
+          .withFunction (traceElement.getMethodName ())
+          .withModule (traceElement.getClassName ());
     }
 
-    error.withException (new ApmException ().withStacktrace (stackTrace));
-    return error;
+    return new ApmError ()
+        .withId (id)
+//        .withTimestamp (LocalDateTime.now ()) //TODO check why it isn't automatically converted to string
+        .withAdditionalProperty ("timestamp", getSimpleDateFormat ().format (new Date ()))
+        .withCulprit (culprit)
+        .withContext (errorContext)
+        .withException (new ApmException ().withStacktrace (stackTrace).withMessage (rootCauseMessage))
+        //.withLog (new ApmLog ().wi)//TODO add log
+        ;
   }
 
   protected String toString (final int intValue) {
@@ -240,15 +270,25 @@ public class ApmAgent implements ApmAgentContext {
       final long durationNanos) {
     final String id = generateUUID ();
     final String name = String.format ("%s %s", request.getMethod (), request.getRequestURI ());
+    final SimpleDateFormat dateFormat = getSimpleDateFormat ();
     final ApmTransaction transaction = new ApmTransaction ();
     transaction
         .withId (id)
+        .withType ("request")
         .withName (name)
         .withResult (status)
         .withDuration (Double.valueOf ((double)durationNanos/1000000))
-        .withTimestamp (LocalDateTime.now ());//TODO add traces
+//        .withTimestamp (LocalDateTime.now ()) //TODO check why it isn't automatically converted to string
+        .withAdditionalProperty ("timestamp", dateFormat.format (new Date()))
+    ;//TODO add traces
 
     return transaction;
+  }
+
+  protected SimpleDateFormat getSimpleDateFormat () {
+    final SimpleDateFormat dateFormat = new SimpleDateFormat ("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    dateFormat.setTimeZone (TimeZone.getTimeZone ("UTC"));
+    return dateFormat;
   }
 
   private String generateUUID () {

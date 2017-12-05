@@ -1,10 +1,12 @@
 package com.davidecavestro.elastic.apm.spring.webmvc;
 
 import com.davidecavestro.elastic.apm.client.ApmAgent;
+import com.davidecavestro.elastic.apm.client.model.ApmFramework;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.SpringVersion;
 
 @Configuration
 @ComponentScan (basePackageClasses = WebMvcPackageRef.class)
@@ -42,6 +44,8 @@ public class ApmConfiguration {
     apmAgent.setEnqueueTimeout (enqueueTimeout);
     apmAgent.setFairQueue (fairQueue);
 
+    apmAgent.getApp ()
+        .withFramework (new ApmFramework ().withName ("Spring").withVersion (SpringVersion.getVersion ()));
     return apmAgent;
   }
 }
