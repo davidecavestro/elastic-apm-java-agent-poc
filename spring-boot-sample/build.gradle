@@ -29,3 +29,7 @@ dependencies {
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 
 }
+
+bootRun {//quick hack to pass args via CLI
+	systemProperties = System.properties
+}
