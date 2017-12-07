@@ -225,6 +225,7 @@ public class ApmAgent implements ApmAgentContext {
           .withFilename (traceElement.getFileName ())
           .withFunction (traceElement.getMethodName ())
           .withModule (traceElement.getClassName ());
+      stackTrace.add (trace);
     }
 
     return new ApmError ()
