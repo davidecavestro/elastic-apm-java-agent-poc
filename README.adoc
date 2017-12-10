@@ -1,4 +1,4 @@
-= Elastic APM Java agent
+= Elastic APM Java agent image::https://travis-ci.org/davidecavestro/elatic-apm-java-agent-poc.svg?branch=master
 A POC for the Java agent of Elastic APM
 :toc:
 
