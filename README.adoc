@@ -1,14 +1,48 @@
-= Elastic APM Java agent image::https://travis-ci.org/davidecavestro/elatic-apm-java-agent-poc.svg?branch=master
-A POC for the Java agent of Elastic APM
-:toc:
-
+= Elastic APM Java agent
+Davide Cavestro <https://github.com/davidecavestro[@davidecavestro]>
+// Settings:
+:idprefix:
+:idseparator: -
+ifndef::env-github[:icons: font]
+ifdef::env-github,env-browser[]
+:toc: macro
+:toclevels: 1
+endif::[]
 ifdef::env-github[]
-:tip-caption: :bulb:
-:note-caption: :information_source:
-:important-caption: :heavy_exclamation_mark:
+:branch: master
+:status:
+:outfilesuffix: .adoc
+:!toc-title:
 :caution-caption: :fire:
+:important-caption: :exclamation:
+:note-caption: :paperclip:
+:tip-caption: :bulb:
 :warning-caption: :warning:
 endif::[]
+// URIs:
+:uri-repo: https://github.com/davidecavestro/elatic-apm-java-agent-poc
+:uri-issues: {uri-repo}/issues
+:uri-search-issues: {uri-repo}/search?type=Issues
+:uri-ci-travis: https://travis-ci.org/asciidoctor/jekyll-asciidoc
+
+ifdef::status[]
+image:https://img.shields.io/github/license/davidecavestro/elatic-apm-java-agent-poc.svg[Apache License 2.0, link=#copyright-and-license]
+image:https://img.shields.io/travis/davidecavestro/elatic-apm-java-agent-poc/master.svg[Build Status (Travis CI), link={uri-ci-travis}]
+endif::[]
+
+A POC for the Java agent of Elastic APM
+
+ifeval::['{branch}' == 'master']
+NOTE: You're viewing the documentation for the upcoming release.
+If you're looking for the documentation for an older release, please refer to one of the following branches: +
+{uri-repo}/tree/2.0.x#readme[2.0.x]
+&hybull;
+{uri-repo}/tree/1.1.x#readme[1.1.x]
+&hybull;
+{uri-repo}/tree/1.0.x#readme[1.0.x]
+endif::[]
+
+toc::[]
 
 This is a proof of concept of Elastic APM Java agent implementation.
 It features automatic collection of errors and transactions for
@@ -133,7 +167,6 @@ private ApmSpringService apmSpringService;
 
 Plenty of things to do :-)
 
-* Add tests (integration tests using wiremock?)
 * Add missing bits to transactions and errors generated payloads
 * [line-through]#Add missing config for generating transactions and errors#
 * Define a widely acceptable sets of dependencies for generic agent/specific bindings (shading?)
@@ -142,3 +175,9 @@ Plenty of things to do :-)
 * Add support to gather jvm/system metrics (CPU, memory, threads)
 * Adopt a pluggable approach for queue consumers (supporting different threading models...)
 * Introduce support for other frameworks
+
+== Copyright and License
+
+Copyright (C) 2017 Davide Cavestro.
+Free use of this software is granted under the terms of the Apache License 2.0.
+See <<LICENSE#,LICENSE>> for details.
