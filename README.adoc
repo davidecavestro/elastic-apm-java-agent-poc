@@ -133,12 +133,12 @@ private ApmSpringService apmSpringService;
 
 Plenty of things to do :-)
 
-* [line-through]#Fix generation of model from schema# DONE
 * Add tests (integration tests using wiremock?)
 * Add missing bits to transactions and errors generated payloads
 * [line-through]#Add missing config for generating transactions and errors#
 * Define a widely acceptable sets of dependencies for generic agent/specific bindings (shading?)
 * Define a widely acceptable java version compatibility
 * Choose a logging library
+* Add support to gather jvm/system metrics (CPU, memory, threads)
 * Adopt a pluggable approach for queue consumers (supporting different threading models...)
 * Introduce support for other frameworks

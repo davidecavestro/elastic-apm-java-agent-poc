@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class ApmAgent implements ApmAgentContext {
+public class ApmAgent implements ApmAgentContext, ApmTracer {
 
   private static final Log logger = LogFactory.getLog(ApmAgent.class);
 
@@ -46,8 +46,8 @@ public class ApmAgent implements ApmAgentContext {
   private int publishBatchSize;
   private long enqueueTimeout;
 
-  private final ApmApp app;
-  private final ApmSystem system;
+  private ApmApp app = new ApmApp ();
+  private ApmSystem system = new ApmSystem ();
 
   private ArrayBlockingQueue<ApmError> errorsQueue;
   private ArrayBlockingQueue<ApmTransaction> transactionsQueue;
@@ -57,8 +57,7 @@ public class ApmAgent implements ApmAgentContext {
   private RetrofitApmApiService apmApiService;
 
   public ApmAgent () {
-    app = new ApmApp ();
-    system = new ApmSystem ();
+    //no-op
   }
 
   public void refresh () {
@@ -66,7 +65,7 @@ public class ApmAgent implements ApmAgentContext {
     start ();
   }
 
-  public void start () {
+  public ApmAgent start () {
     logger.info ("Starting ES APM agent");
     initApmInfo();
     apmApiService = createApiClient (RetrofitApmApiService.class);
@@ -77,10 +76,12 @@ public class ApmAgent implements ApmAgentContext {
     // init senders
     errorsSender = startQueue (new ErrorsDataPump (this, errorsQueue));
     transactionsSender = startQueue (new TransactionsDataPump (this, transactionsQueue));
+
+    return this;
  }
 
   protected void initApmInfo () {
-    app
+    getApp()
         .withName (appName)
         .withAgent (new com.davidecavestro.elastic.apm.client.model.ApmAgent ()
             .withName ("java")
@@ -138,35 +139,19 @@ public class ApmAgent implements ApmAgentContext {
     return retrofit.create(type);
   }
 
-  /**
-   * Sends transaction tracing data, possibly waiting for for space to
-   * become available.
-   *
-   * @param ex the exception to trace
-   * @throws InterruptedException
-   */
+  @Override
   public void traceError (final Exception ex,
                           final HttpServletRequest request,
                           final HttpServletResponse response) throws InterruptedException {
     traceError (prepareError (ex, request, response));
   }
 
-  /**
-   * Sends error tracing data, possibly waiting for for space to
-   * become available.
-   *
-   * @param error the error representation
-   * @throws InterruptedException
-   */
+  @Override
   public void traceError (final ApmError error) throws InterruptedException {
     errorsQueue.offer (error, enqueueTimeout, TimeUnit.MILLISECONDS);
   }
 
-  /**
-   * Returns a tracing error representation filled with the passed exception.
-   * @param ex the exception to trace
-   * @return the tracing error representation filled with the passed exception
-   */
+  @Override
   public ApmError prepareError (
       final Exception ex,
       final HttpServletRequest request,
@@ -180,42 +165,6 @@ public class ApmAgent implements ApmAgentContext {
     final String[] rootCauseStackTrace = ExceptionUtils.getRootCauseStackTrace (ex);
     final String culprit = rootCauseStackTrace.length > 0 ?
         rootCauseStackTrace[0] : null;
-
-    final ApmContext errorContext = new ApmContext ();
-    if (request != null) {
-      final ApmHeaders_ apmHeaders = new ApmHeaders_ ();
-      apmHeaders.withContent_type (response.getContentType ());
-      for (
-          final Enumeration<String> headerNames = request.getHeaderNames ();
-          headerNames.hasMoreElements (); ) {
-        final String headerName = headerNames.nextElement ();
-        apmHeaders.withAdditionalProperty (headerName, request.getHeader (headerName));
-      }
-
-      errorContext.withRequest (
-          new ApmRequest ().withUrl (new ApmUrl ()
-              .withHostname (request.getServerName ())
-              .withPort (toString (request.getServerPort ()))
-              .withPathname (request.getRequestURI ())
-              .withSearch (request.getQueryString ())
-              .withProtocol (request.getScheme ()))
-              .withMethod (request.getMethod ())
-              .withHeaders (apmHeaders)
-              .withEnv (new ApmEnv ())
-      );
-    }
-    if (response != null) {
-      final ApmResponse apmResponse = new ApmResponse ();
-      final ApmHeaders apmHeaders = new ApmHeaders ();
-      apmHeaders.withContent_type (response.getContentType ());
-      for (final String headerName : response.getHeaderNames ()) {
-        apmHeaders.withAdditionalProperty (headerName, response.getHeader (headerName));
-      }
-
-      apmResponse.withHeaders (apmHeaders);
-
-      errorContext.withResponse (apmResponse.withStatus_code ((double) response.getStatus ()));
-    }
 
     final List<ApmStacktrace> stackTrace = new ArrayList<> ();
 
@@ -233,37 +182,84 @@ public class ApmAgent implements ApmAgentContext {
 //        .withTimestamp (LocalDateTime.now ()) //TODO check why it isn't automatically converted to string
         .withAdditionalProperty ("timestamp", getSimpleDateFormat ().format (new Date ()))
         .withCulprit (culprit)
-        .withContext (errorContext)
+        .withContext (toApmContext (request, response))
         .withException (new ApmException ().withStacktrace (stackTrace).withMessage (rootCauseMessage))
         //.withLog (new ApmLog ().wi)//TODO add log
         ;
+  }
+
+  protected ApmContext toApmContext (final HttpServletRequest request, final HttpServletResponse response) {
+    return new ApmContext ()
+        .withRequest (toApmRequest(request))
+        .withResponse (toApmResponse (response));
+  }
+
+  protected ApmResponse toApmResponse (final HttpServletResponse response) {
+    final ApmResponse apmResponse;
+    if (response != null) {
+      final ApmHeaders apmHeaders = new ApmHeaders ()
+          .withContent_type (response.getContentType ());
+      for (final String headerName : response.getHeaderNames ()) {
+        apmHeaders.withAdditionalProperty (headerName, response.getHeader (headerName));
+      }
+
+      apmResponse = new ApmResponse ()
+          .withHeaders (apmHeaders)
+          .withStatus_code ((double) response.getStatus ())
+        //TODO add missing props
+      ;
+    } else {
+      apmResponse = null;
+    }
+    return apmResponse;
+  }
+
+  protected ApmRequest toApmRequest (final HttpServletRequest request) {
+    final ApmRequest apmRequest;
+    if (request != null) {
+      final ApmHeaders_ apmHeaders = new ApmHeaders_ ();
+      apmHeaders.withContent_type (request.getContentType ());
+      for (
+          final Enumeration<String> headerNames = request.getHeaderNames ();
+          headerNames.hasMoreElements (); ) {
+        final String headerName = headerNames.nextElement ();
+        apmHeaders.withAdditionalProperty (headerName, request.getHeader (headerName));
+      }
+
+      apmRequest = new ApmRequest ().withUrl (new ApmUrl ()
+          .withHostname (request.getServerName ())
+          .withPort (toString (request.getServerPort ()))
+          .withPathname (request.getRequestURI ())
+          .withSearch (request.getQueryString ())
+          .withProtocol (request.getScheme ()))
+          .withMethod (request.getMethod ())
+          .withHeaders (apmHeaders)
+          .withEnv (new ApmEnv ());
+    } else {
+      apmRequest = null;
+    }
+    return apmRequest;
   }
 
   protected String toString (final int intValue) {
     return Integer.toString (intValue);
   }
 
-  /**
-   * Sends transaction tracing data, possibly waiting for for space to
-   * become available.
-   * @param transaction the transaction representation
-
-   * @throws InterruptedException if interrupted while waiting for space to
-   * become available for storing the transaction
-   */
+  @Override
   public void traceTransaction (final ApmTransaction transaction) throws InterruptedException {
     transactionsQueue.offer (transaction, enqueueTimeout, TimeUnit.MILLISECONDS);
   }
 
-  /**
-   * Returns a transaction representation filled with values obtained from passed args
-   *
-   * @param request the http request
-   * @param response the http response
-   * @param status the transaction status
-   * @param durationNanos transaction duration in nanos
-   * @return a partially configured transaction representation
-   */
+  @Override
+  public void traceTransaction (
+      final HttpServletRequest request,
+      final HttpServletResponse response,
+      final String status,
+      final long durationNanos) throws InterruptedException {
+    traceTransaction (prepareTransaction (request, response, status, durationNanos));
+  }
+
+  @Override
   public ApmTransaction prepareTransaction (
       final HttpServletRequest request,
       final HttpServletResponse response,
@@ -281,6 +277,7 @@ public class ApmAgent implements ApmAgentContext {
         .withDuration (Double.valueOf ((double)durationNanos/1000000))
 //        .withTimestamp (LocalDateTime.now ()) //TODO check why it isn't automatically converted to string
         .withAdditionalProperty ("timestamp", dateFormat.format (new Date()))
+    .withContext (toApmContext (request, response))
     ;//TODO add traces
 
     return transaction;
@@ -397,6 +394,125 @@ public class ApmAgent implements ApmAgentContext {
     this.enqueueTimeout = enqueueTimeout;
   }
 
+  public String getAppVersion () {
+    return appVersion;
+  }
+
+  public void setAppVersion (String appVersion) {
+    this.appVersion = appVersion;
+  }
+
+  public ArrayBlockingQueue<ApmError> getErrorsQueue () {
+    return errorsQueue;
+  }
+
+  public void setErrorsQueue (ArrayBlockingQueue<ApmError> errorsQueue) {
+    this.errorsQueue = errorsQueue;
+  }
+
+  public ArrayBlockingQueue<ApmTransaction> getTransactionsQueue () {
+    return transactionsQueue;
+  }
+
+  public void setTransactionsQueue (ArrayBlockingQueue<ApmTransaction> transactionsQueue) {
+    this.transactionsQueue = transactionsQueue;
+  }
+
+  public ScheduledExecutorService getErrorsSender () {
+    return errorsSender;
+  }
+
+  public void setErrorsSender (ScheduledExecutorService errorsSender) {
+    this.errorsSender = errorsSender;
+  }
+
+  public ScheduledExecutorService getTransactionsSender () {
+    return transactionsSender;
+  }
+
+  public void setTransactionsSender (ScheduledExecutorService transactionsSender) {
+    this.transactionsSender = transactionsSender;
+  }
+
+  public void setApmApiService (RetrofitApmApiService apmApiService) {
+    this.apmApiService = apmApiService;
+  }
+
+  public ApmAgent withAppName (String val) {
+    appName = val;
+    return this;
+  }
+
+  public ApmAgent withSecretToken (String val) {
+    secretToken = val;
+    return this;
+  }
+
+  public ApmAgent withAppVersion (String val) {
+    appVersion = val;
+    return this;
+  }
+
+  public ApmAgent withApmHost (String val) {
+    apmHost = val;
+    return this;
+  }
+
+  public ApmAgent withInitialDelay (long val) {
+    initialDelay = val;
+    return this;
+  }
+
+  public ApmAgent withPeriod (long val) {
+    period = val;
+    return this;
+  }
+
+  public ApmAgent withQueueCapacity (int val) {
+    queueCapacity = val;
+    return this;
+  }
+
+  public ApmAgent withFairQueue (boolean val) {
+    fairQueue = val;
+    return this;
+  }
+
+  public ApmAgent withPublishBatchSize (int val) {
+    publishBatchSize = val;
+    return this;
+  }
+
+  public ApmAgent withEnqueueTimeout (long val) {
+    enqueueTimeout = val;
+    return this;
+  }
+
+  public ApmAgent withErrorsQueue (ArrayBlockingQueue<ApmError> val) {
+    errorsQueue = val;
+    return this;
+  }
+
+  public ApmAgent withTransactionsQueue (ArrayBlockingQueue<ApmTransaction> val) {
+    transactionsQueue = val;
+    return this;
+  }
+
+  public ApmAgent withErrorsSender (ScheduledExecutorService val) {
+    errorsSender = val;
+    return this;
+  }
+
+  public ApmAgent withTransactionsSender (ScheduledExecutorService val) {
+    transactionsSender = val;
+    return this;
+  }
+
+  public ApmAgent withApmApiService (RetrofitApmApiService val) {
+    apmApiService = val;
+    return this;
+  }
+
   private static class FixedContentTypeInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {
@@ -406,4 +522,5 @@ public class ApmAgent implements ApmAgentContext {
       return chain.proceed(requestBuilder.build());
     }
   }
+
 }

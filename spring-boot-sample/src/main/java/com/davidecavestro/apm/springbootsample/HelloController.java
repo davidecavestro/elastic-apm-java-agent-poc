@@ -7,11 +7,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HelloController {
 
+  private String helloMessage = "Greetings from Spring Boot!";
+  private String failureMessage = "FAKE failure";
+
   @RequestMapping("/")
   public String index(@RequestParam(value = "fail", required = false, defaultValue = "false") final boolean fail) {
     if (fail) {
-      throw new RuntimeException ("FAKE failure");
+      throw new RuntimeException (failureMessage);
     }
-    return "Greetings from Spring Boot!";
+    return helloMessage;
+  }
+
+  public String getHelloMessage () {
+    return helloMessage;
+  }
+
+  public void setHelloMessage (String helloMessage) {
+    this.helloMessage = helloMessage;
+  }
+
+  public String getFailureMessage () {
+    return failureMessage;
+  }
+
+  public void setFailureMessage (String failureMessage) {
+    this.failureMessage = failureMessage;
   }
 }

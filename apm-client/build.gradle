@@ -1,4 +1,4 @@
-apply plugin: 'java'
+apply plugin: 'groovy'
 apply plugin: 'jsonschema2pojo'
 
 buildscript {
@@ -34,7 +34,15 @@ dependencies {
   compile 'commons-logging:commons-logging:1.2'
 
   compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
-}
+
+  testCompile(
+//      'org.springframework:spring-test:4.3.13.RELEASE',//FIXME refactor library versions
+      'javax.servlet:javax.servlet-api:3.0.1',
+
+      'junit:junit:4.12',
+      'org.codehaus.groovy:groovy-all:2.4.12',
+      'org.spockframework:spock-core:1.1-groovy-2.4-rc-2'
+  )}
 
 // Each configuration is set to the default value
 jsonSchema2Pojo {
