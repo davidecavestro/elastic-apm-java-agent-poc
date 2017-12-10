@@ -170,4 +170,4 @@ Plenty of things to do :-)
 
 Copyright (C) 2017 Davide Cavestro.
 Free use of this software is granted under the terms of the Apache License 2.0.
-See <<LICENSE#,LICENSE>> for details.
+See LICENSE for details.
