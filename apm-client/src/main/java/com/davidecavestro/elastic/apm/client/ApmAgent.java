@@ -170,7 +170,8 @@ public class ApmAgent implements ApmAgentContext, ApmTracer {
 
     for (final StackTraceElement traceElement : ex.getStackTrace ()) {
       final ApmStacktrace trace = new ApmStacktrace ()
-          .withLineno (Integer.valueOf (traceElement.getLineNumber ()).doubleValue ())
+//          .withLineno (Integer.valueOf (traceElement.getLineNumber ()).doubleValue ())
+          .withAdditionalProperty ("lineno", traceElement.getLineNumber ())
           .withFilename (traceElement.getFileName ())
           .withFunction (traceElement.getMethodName ())
           .withModule (traceElement.getClassName ());
