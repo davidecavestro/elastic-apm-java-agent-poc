@@ -1,4 +1,4 @@
-package com.davidecavestro.elastic.apm.client;
+package com.davidecavestro.elastic.apm.client.api;
 
 import com.davidecavestro.elastic.apm.client.model.errors.ApmError;
 import com.davidecavestro.elastic.apm.client.model.transactions.ApmTransaction;
@@ -6,7 +6,10 @@ import com.davidecavestro.elastic.apm.client.model.transactions.ApmTransaction;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public interface ApmTracer {
+/**
+ * Collects data to be sent to the APM server.
+ */
+public interface ApmCollector {
   /**
    * Sends transaction tracing data, possibly waiting for for space to
    * become available.

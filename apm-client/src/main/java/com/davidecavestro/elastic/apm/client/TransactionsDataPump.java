@@ -1,5 +1,6 @@
 package com.davidecavestro.elastic.apm.client;
 
+import com.davidecavestro.elastic.apm.client.api.ApmAgentContext;
 import com.davidecavestro.elastic.apm.client.model.transactions.ApmPayload;
 import com.davidecavestro.elastic.apm.client.model.transactions.ApmTransaction;
 import org.apache.commons.logging.Log;
@@ -22,7 +23,7 @@ public class TransactionsDataPump extends AbstractDataPump<ApmTransaction> {
 
 
   @Override
-  protected void sendData (final ApmAgentContext apmAgentContext, final List<ApmTransaction> data) throws IOException {
+  public void sendData (final ApmAgentContext apmAgentContext, final List<ApmTransaction> data) throws IOException {
     logger.info ("Sending transactions data");
     final Response<Void> response = apmAgentContext.getApmApiService ().sendTransactions (createTransactionsPayload ()
         .withTransactions (data)

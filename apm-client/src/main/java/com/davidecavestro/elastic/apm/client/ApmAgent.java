@@ -1,5 +1,7 @@
 package com.davidecavestro.elastic.apm.client;
 
+import com.davidecavestro.elastic.apm.client.api.ApmAgentContext;
+import com.davidecavestro.elastic.apm.client.api.ApmCollector;
 import com.davidecavestro.elastic.apm.client.model.*;
 import com.davidecavestro.elastic.apm.client.model.errors.*;
 import com.davidecavestro.elastic.apm.client.model.transactions.ApmTransaction;
@@ -28,7 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class ApmAgent implements ApmAgentContext, ApmTracer {
+public class ApmAgent implements ApmAgentContext, ApmCollector {
 
   private static final Log logger = LogFactory.getLog(ApmAgent.class);
 

@@ -1,6 +1,7 @@
 package com.davidecavestro.elastic.apm.client;
 
-import com.davidecavestro.elastic.apm.client.model.errors.ApmError;
+import com.davidecavestro.elastic.apm.client.api.ApmAgentContext;
+import com.davidecavestro.elastic.apm.client.api.ApmPublisher;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -11,11 +12,11 @@ import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * Pumps data from queue to the APM server.
+ * A timer task that pumps data from a queue to the APM server.
  *
  * @param <T> type of queue content
  */
-public abstract class AbstractDataPump<T> extends TimerTask {
+public abstract class AbstractDataPump<T> extends TimerTask implements ApmPublisher<T> {
   private static final Log logger = LogFactory.getLog(ApmAgent.class);
 
   private final ApmAgentContext apmAgentContext;
@@ -33,14 +34,6 @@ public abstract class AbstractDataPump<T> extends TimerTask {
       logger.error ("Cannot send data", e);
     }
   }
-
-  /**
-   * Sends a batch of data to the APM server.
-   *
-   * @param apmAgentContext the APM agent context
-   * @param data the data to publish
-   */
-  protected abstract void sendData (final ApmAgentContext apmAgentContext, final List<T> data) throws IOException;
 
   /**
    * Pumps data from the queue, within the agent context.

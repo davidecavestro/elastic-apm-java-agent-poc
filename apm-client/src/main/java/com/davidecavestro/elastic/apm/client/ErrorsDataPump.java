@@ -1,5 +1,6 @@
 package com.davidecavestro.elastic.apm.client;
 
+import com.davidecavestro.elastic.apm.client.api.ApmAgentContext;
 import com.davidecavestro.elastic.apm.client.model.errors.ApmError;
 import com.davidecavestro.elastic.apm.client.model.errors.ApmPayload;
 import org.apache.commons.logging.Log;
@@ -21,7 +22,7 @@ public class ErrorsDataPump extends AbstractDataPump<ApmError> {
   }
 
   @Override
-  protected void sendData (final ApmAgentContext apmAgentContext, final List<ApmError> data) throws IOException {
+  public void sendData (final ApmAgentContext apmAgentContext, final List<ApmError> data) throws IOException {
     logger.info ("Sending error data");
     final Response<Void> response = apmAgentContext.getApmApiService ().sendErrors (createErrorsPayload ()
         .withErrors (data)

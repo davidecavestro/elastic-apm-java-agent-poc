@@ -1,4 +1,4 @@
-package com.davidecavestro.elastic.apm.client;
+package com.davidecavestro.elastic.apm.client.api;
 
 import com.davidecavestro.elastic.apm.client.model.ApmApp;
 import com.davidecavestro.elastic.apm.client.model.errors.ApmSystem;
