@@ -20,14 +20,15 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::[]
 // URIs:
-:uri-repo: https://github.com/davidecavestro/elatic-apm-java-agent-poc
+:uri-repo: https://github.com/davidecavestro/elastic-apm-java-agent-poc
 :uri-issues: {uri-repo}/issues
 :uri-search-issues: {uri-repo}/search?type=Issues
-:uri-ci-travis: https://travis-ci.org/asciidoctor/jekyll-asciidoc
-
+:uri-ci-travis: https://travis-ci.org/davidecavestro/elastic-apm-java-agent-poc
+:uri-coverage-coveralls: https://coveralls.io/github/davidecavestro/elastic-apm-java-agent-poc?branch=master
 ifdef::status[]
-image:https://img.shields.io/github/license/davidecavestro/elatic-apm-java-agent-poc.svg[Apache License 2.0, link=#copyright-and-license]
-image:https://img.shields.io/travis/davidecavestro/elatic-apm-java-agent-poc/master.svg[Build Status (Travis CI), link={uri-ci-travis}]
+image:https://img.shields.io/github/license/davidecavestro/elastic-apm-java-agent-poc.svg[Apache License 2.0, link=#copyright-and-license]
+image:https://img.shields.io/travis/davidecavestro/elastic-apm-java-agent-poc/master.svg[Build Status (Travis CI), link={uri-ci-travis}]
+image:https://img.shields.io/coveralls/github/davidecavestro/elastic-apm-java-agent-poc.svg[Coverage Status (Coveralls)], link={uri-coverage-coveralls}]
 endif::[]
 
 A POC for the Java agent of Elastic APM
