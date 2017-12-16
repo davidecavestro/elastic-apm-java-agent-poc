@@ -1,5 +1,7 @@
+apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'jsonschema2pojo'
+apply plugin: 'jacoco'
 
 buildscript {
   repositories {
@@ -208,4 +210,8 @@ jsonSchema2Pojo {
 }
 
 
-
+jacocoTestReport {
+  reports {
+    xml.enabled true
+  }
+}
