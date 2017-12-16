@@ -28,7 +28,7 @@ endif::[]
 ifdef::status[]
 image:https://img.shields.io/github/license/davidecavestro/elastic-apm-java-agent-poc.svg[Apache License 2.0, link=#copyright-and-license]
 image:https://img.shields.io/travis/davidecavestro/elastic-apm-java-agent-poc/master.svg[Build Status (Travis CI), link={uri-ci-travis}]
-image:https://img.shields.io/coveralls/github/davidecavestro/elastic-apm-java-agent-poc.svg[Coverage Status (Coveralls)], link={uri-coverage-coveralls}]
+image:https://img.shields.io/coveralls/github/davidecavestro/elastic-apm-java-agent-poc.svg[Coverage Status (Coveralls), link={uri-coverage-coveralls}]
 endif::[]
 
 A POC for the Java agent of Elastic APM
