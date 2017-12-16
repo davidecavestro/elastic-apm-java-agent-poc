@@ -1,45 +1,21 @@
-
 allprojects {
+
   group = 'com.davidecavestro.elastic.apm'
   version = '0.0.1-SNAPSHOT'
 
-  apply plugin: 'java'
-  apply plugin: 'maven'
-  apply plugin: 'jacoco'
-
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
-
   repositories {
-      mavenLocal()
-      mavenCentral()
-      jcenter()
-
-      maven { url "http://repo1.maven.org/maven2/" }
+    mavenCentral()
   }
-}
 
-subprojects {
-  if (test) {
-    test.useTestNG()
+  plugins {
+    id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.6.3'
   }
-}
 
-task codeCoverageReport(type: JacocoReport) {
-    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
-
-    subprojects.each {
-        sourceSets it.sourceSets.main
-    }
-
+  jacocoTestReport {
     reports {
-        xml.enabled true
-        xml.destination "${buildDir}/reports/jacoco/report.xml"
-        html.enabled false
-        csv.enabled false
+      xml.enabled = true // coveralls plugin depends on xml format report
+      html.enabled = true
     }
-}
-
-codeCoverageReport.dependsOn {
-    subprojects*.test
+  }
 }
