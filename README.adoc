@@ -39,6 +39,7 @@ This is a proof of concept of Elastic APM Java agent implementation.
 It features automatic collection of errors and transactions for
 spring webmvc/spring boot web applications.
 
+See https://github.com/elastic/apm-agent-java for the official java agent from Elastic.
 
 == How does it work
 
